@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+pmadapt.db
+node_modules/
+.next/
