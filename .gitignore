@@ -4,3 +4,4 @@ __pycache__/
 pmadapt.db
 node_modules/
 .next/
+venv/
