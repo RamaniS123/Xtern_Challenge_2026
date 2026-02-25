@@ -1,0 +1,21 @@
+asset_id,model_name,engine_model,standby_kw,site_type,environment_type,age_years,runtime_hours_since_last_service,pm_interval_hours,air_filter_clean_hours,air_filter_replace_hours,environment_interval_factor,cooling_type,ambient_rating_c,last_service_notes,region
+GEN001,C70D5,4BT3.9,70,small_clinic,standard_indoor,2,180,250,100,500,1,integral_radiator,40,No issues found at last visit,Northeast
+GEN002,C80D5,4BT3.9,80,small_clinic,hot_dusty,4,220,125,50,250,0.5,integral_radiator,50,Air filter heavily clogged at last visit,Southwest
+GEN003,DGDK,6BTA5.9,100,commercial_building,standard_indoor,3,190,250,100,500,1,integral_radiator,40,Battery terminals showing minor corrosion,Midwest
+GEN004,DSGAA,QSB7,150,commercial_building,coastal,5,240,125,50,250,0.5,integral_radiator,50,Corrosion noted on external housing last visit,Southeast
+GEN005,DSGAE,QSB7,200,hospital,standard_indoor,3,200,250,100,500,1,integral_radiator,40,All readings normal at last visit,Northeast
+GEN006,C185D6,6CTA8.3,170,hospital,hot_dusty,6,230,125,50,250,0.5,integral_radiator,50,Coolant level low at last visit topped up,Southwest
+GEN007,DGFA,6CTA8.3,160,data_center,standard_indoor,2,150,250,100,500,1,integral_radiator,40,New unit no issues found,West
+GEN008,DGFC,6CTAA8.3,200,data_center,hot_dusty,7,260,125,50,250,0.5,integral_radiator,50,Belt showing wear flagged for monitoring,Southwest
+GEN009,C275D2RE,QSL9,275,data_center,standard_indoor,4,210,250,100,500,1,remote_radiator,40,Minor fuel leak repaired at last visit,Midwest
+GEN010,C300D6R,QSM11,300,data_center,hot_dusty,5,245,125,50,250,0.5,remote_radiator,50,Air filter replaced cooling system flushed,Southwest
+GEN011,DFCC,NTA855,350,hospital,coastal,6,235,125,50,250,0.5,remote_radiator,50,Corrosion on battery terminals treated,Southeast
+GEN012,DFEK,QSX15,500,data_center,standard_indoor,3,180,250,100,500,1,remote_radiator,40,All systems normal at last visit,West
+GEN013,DFEJ,QSX15,450,hospital,hot_dusty,8,270,125,50,250,0.5,remote_radiator,50,Aging battery borderline voltage reading flagged,Southwest
+GEN014,DQPAA,QSK19,600,data_center,standard_indoor,4,200,250,100,500,1,remote_radiator,40,Coolant flush completed all normal,West
+GEN015,DQPAB,QSK19,700,data_center,coastal,5,225,125,50,250,0.5,remote_radiator,50,Salt corrosion on external components noted,Southeast
+GEN016,DQCA,QSK23,750,hospital,standard_indoor,6,215,250,100,500,1,remote_radiator,40,Thermostat replaced runs stable,Midwest
+GEN017,DQCC,QSK23,800,data_center,hot_dusty,9,280,125,50,250,0.5,remote_radiator,50,Multiple borderline readings needs attention,Southwest
+GEN018,DQGAE,QSK50,1250,data_center,standard_indoor,5,195,250,100,500,1,remote_radiator,40,Major overhaul completed 6 months ago,West
+GEN019,DQGAR,QSK50,1400,hospital,hot_dusty,10,290,125,50,250,0.5,remote_radiator,50,Oldest unit multiple worn components flagged,Southwest
+GEN020,DFLE,KTA50,1500,data_center,standard_indoor,3,170,250,100,500,1,remote_radiator,40,Recently commissioned running well,West

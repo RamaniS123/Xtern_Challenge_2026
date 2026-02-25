@@ -1,0 +1,41 @@
+item_id,category,inspection_item,normal_hint,abnormal_hint,safety_level,base_interval
+1,cooling,Check coolant level in radiator,Coolant at proper level in radiator/expansion tank; no need to top up.,Coolant below recommended level or requires frequent topping up.,yellow,daily
+2,cooling,Inspect coolant hoses and clamps,Hoses intact with no cracks or bulges; clamps tight; no seepage.,"Cracked, soft, or bulging hoses; loose clamps; signs of coolant seepage or leaks.",red,weekly
+3,cooling,Inspect radiator for dirt and debris,"Radiator fins clear; no significant dust, dirt, or debris blocking airflow.","Radiator fins coated with dirt, dust, or debris; airflow visibly restricted.",yellow,monthly
+4,cooling,Check coolant for proper concentration,Coolant appears clean with correct concentration per manufacturer guidance.,"Discolored coolant, visible rust/scale, or unknown/incorrect mix.",yellow,monthly
+5,cooling,Inspect water pump area for leaks,No coolant dripping or stains around water pump area.,"Coolant traces, wetness, or dried residue around water pump or weep holes.",red,monthly
+6,cooling,Confirm engine reaches normal operating temperature,Engine reaches stable operating temperature within normal range during test run.,"Overheating, temperature fluctuating, or engine running colder/hotter than normal.",red,monthly
+7,cooling,Inspect fan belt condition,Fan belt free of cracks and fraying; surface not glazed.,"Cracks, fraying, glazing, or missing belt segments.",yellow,weekly
+8,cooling,Check fan belt tension,Belt deflection within manufacturer spec; no slipping noise.,Belt too loose (slips/squeals) or overly tight (excessive strain on pulleys).,yellow,monthly
+9,cooling,Inspect coolant reservoir cap,Cap seals correctly; no signs of damage; holds pressure.,Damaged or missing cap; evidence of coolant escape around cap.,yellow,quarterly
+10,cooling,Inspect radiator cap and neck,Cap fits securely; no corrosion or deformation at neck.,"Damaged cap, corrosion at neck, or evidence of coolant leaks around cap.",yellow,quarterly
+11,fuel,Check fuel level,Fuel level within acceptable range for standby operation.,Fuel level low for expected runtime or below site policy threshold.,yellow,daily
+12,fuel,Inspect fuel lines and fittings,"Fuel lines intact; no cracks, bulges, or damp spots; fittings tight.","Visible fuel leaks, dampness, cracks, or loose fittings.",red,weekly
+13,fuel,Inspect fuel filter condition,"Filter housing dry, no leaks; service date within recommended interval.","Leaks at filter, heavily corroded housing, or overdue replacement.",yellow,monthly
+14,fuel,Drain water/sediment from fuel tank or separator,No significant water or debris in drained sample; fuel appears clean.,"Water, sludge, or visible contamination in drained sample.",red,monthly
+15,fuel,Inspect flexible fuel hoses,"Hoses flexible, not hardened or cracked; no chafing or rubbing points.","Hard, brittle, cracked hoses or signs of chafing against other components.",yellow,quarterly
+16,fuel,Check fuel tank vent and breather,"Vent unobstructed; no dirt, insects, or debris blocking breather.",Blocked or restricted vent; buildup of debris around breather.,yellow,quarterly
+17,fuel,Inspect fuel shutoff valves,Valves operate smoothly; no leakage around seals.,"Valves seized, hard to operate, or leaking at stem or body.",red,quarterly
+18,fuel,Inspect fuel day tank (if equipped),Day tank level normal; no leaks; gauges operational.,"Leaks around day tank, faulty level gauge, or abnormal level trends.",red,monthly
+19,electrical,Inspect main electrical connections,"Lugs and terminals tight; no discoloration, arcing marks, or insulation damage.","Loose connections, burned/discolored insulation, or evidence of arcing.",red,weekly
+20,electrical,Inspect control panel indicators and gauges,All indicator lights and gauges operate as expected; no active alarms.,"Warning lights illuminated, gauges reading out of normal range, or inoperative indicators.",red,daily
+21,electrical,Check generator breaker position and condition,Breaker in correct standby position; mechanism operates smoothly; no visible damage.,"Breaker difficult to operate, signs of overheating, or incorrect position for standby.",red,monthly
+22,electrical,Inspect wiring harnesses,Harnesses secured; insulation intact; no chafing or rubbing points.,"Frayed insulation, loose harness supports, or wires rubbing on sharp edges.",red,monthly
+23,electrical,Test engine start and run under no-load,Engine starts promptly and runs smoothly without abnormal noise or vibration.,"Hard starting, rough running, or abnormal noises during operation.",red,monthly
+24,electrical,Inspect alternator for physical condition,Alternator housing undamaged; mounting bolts secure; no oil or coolant contamination.,"Cracks, loose mounting hardware, or signs of fluid contamination on alternator.",red,quarterly
+25,electrical,Inspect block heater operation,Block heater warms engine as expected; cords and connections intact.,"Block heater not functioning, damaged power cord, or loose connection.",yellow,monthly
+26,battery,Inspect battery terminals and cables,Terminals clean and tight; no corrosion; cables secure with no broken strands.,"Corrosion on terminals, loose clamps, or damaged battery cables.",red,weekly
+27,battery,Check battery electrolyte level (if serviceable),Electrolyte level within marked range; plates fully covered.,Low electrolyte exposing plates or uneven levels between cells.,red,monthly
+28,battery,Measure battery voltage at rest,"Voltage within normal range for fully charged battery (e.g., ~12.6V for 12V).",Voltage significantly below normal fully charged range.,yellow,monthly
+29,battery,Perform battery load test,Battery maintains voltage under load within acceptable drop limits.,Voltage drops excessively during load test; battery fails to hold charge.,red,quarterly
+30,battery,Inspect battery case and mounting,Battery case intact; no swelling or cracks; hold-down hardware secure.,"Cracked or swollen case, loose hold-downs, or signs of impact damage.",red,monthly
+31,battery,Check battery charger / charging system,Charging indicator normal; voltage within specified charging range.,"Charger not operating, overcharging, or undercharging battery.",red,monthly
+32,air_intake,Inspect air filter element,Filter free of heavy dirt buildup; restriction indicator in normal range.,"Filter heavily dirty, clogged, or restriction indicator showing high restriction.",yellow,weekly
+33,air_intake,Inspect air filter housing and seals,Housing intact; seals/gaskets in place; no gaps for unfiltered air.,"Cracked housing, missing seals, or evidence of dust bypassing filter.",yellow,monthly
+34,air_intake,Inspect air intake piping and clamps,Piping secure; clamps tight; no cracks or loose joints.,"Loose clamps, cracked piping, or signs of rubbing and wear.",yellow,monthly
+35,air_intake,Inspect turbocharger air inlet (if equipped),Inlet clean; no foreign objects; no excessive oil residue.,"Foreign material at inlet, heavy dust buildup, or excessive oil film.",red,quarterly
+36,air_intake,Check for obstructions at air intake louvers,Louvers free of debris; airflow path unobstructed.,"Leaves, dust, or debris blocking louvers or screens.",yellow,weekly
+37,air_intake,Inspect crankcase breather filter (if equipped),Breather element clean; no blockage; hoses intact.,"Blocked or heavily contaminated breather, damaged breather hoses.",yellow,quarterly
+38,cooling,Inspect intercooler or aftercooler core (if equipped),Core fins clean; no significant dirt or oil film; airflow unobstructed.,Fins clogged with dirt/oil; visible damage or bent fins restricting airflow.,yellow,quarterly
+39,fuel,Inspect fuel pump and injection lines,Pump body dry; injection lines tight; no signs of leakage or chafing.,Fuel seepage at pump or lines; chafing marks; damp connections.,red,quarterly
+40,electrical,Verify emergency stop and safety shutdown circuits,Emergency stop and safety shutdowns function correctly during test.,Emergency stop or safety shutdowns fail to operate or behave erratically.,red,monthly
