@@ -42,12 +42,13 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
     
     # Step 4 - findings analysis
     sample_findings = [
-        {
-            "item": first_priority,
-            "observation": "borderline readings noted",
-            "safety_level": "yellow"
-        }
+    {
+        "item": "battery",
+        "observation": "borderline voltage reading noted, terminals showing early corrosion",
+        "safety_level": "yellow"
+    }
     ]
+    
     print("Running findings analysis...")
     findings_result = run_findings_analysis(
         session_id="test_session",
