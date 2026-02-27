@@ -30,7 +30,9 @@ def run_risk_assessment(session_id: str, asset: dict) -> dict:
                 "reason": "specific reason based on this asset",
                 "confidence": 0.85
             }}
-        ]
+        ],
+        "hours_overdue": 145,
+        "pre_visit_summary": "one sentence summary of the most important thing to watch for today"
     }}
     
     Rules:
@@ -38,6 +40,8 @@ def run_risk_assessment(session_id: str, asset: dict) -> dict:
     - category must be one of: battery, cooling, fuel, air_intake, electrical, mechanical
     - confidence must be between 0.70 and 0.94
     - reason must reference specific asset details like age or environment
+    - hours_overdue is runtime_hours_since_last_service minus pm_interval_hours — if negative return 0
+    - pre_visit_summary must be one sentence maximum referencing the most critical risk factor
     - Always return valid JSON only
     - Never exceed 0.95 confidence
     """

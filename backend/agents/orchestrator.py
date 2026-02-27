@@ -36,17 +36,17 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
     checklist_result = run_adaptive_checklist(
         session_id="test_session",
         current_item=first_priority,
-        tech_observation="visually inspecting now"
+        tech_observation="voltage reads 12.3V, white powder visible on both terminals"
     )
     print(f"Checklist result: {checklist_result}")
     
     # Step 4 - findings analysis
     sample_findings = [
-    {
-        "item": "battery",
-        "observation": "borderline voltage reading noted, terminals showing early corrosion",
-        "safety_level": "yellow"
-    }
+        {
+            "item": first_priority,
+            "observation": "voltage 12.3V below threshold, white powder on terminals, load test voltage dropped to 11.4V",
+            "safety_level": "yellow"
+        }
     ]
     
     print("Running findings analysis...")

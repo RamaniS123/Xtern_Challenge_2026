@@ -1,7 +1,10 @@
 import csv
 import os
 from agents import call_llm
+from audit_log import audit
 
+
+@audit("escalation_agent")
 def load_approver(region: str = "Midwest") -> dict:
     csv_path = os.path.join(os.path.dirname(__file__), "../../data/approvers.csv")
     with open(csv_path) as f:
