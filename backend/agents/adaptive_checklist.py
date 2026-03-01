@@ -2,6 +2,7 @@ import csv
 import os
 import re
 from agents import call_llm
+from audit_log import audit
 
 CHECKLIST_CATEGORY_MAP = {
     "battery": "battery",
@@ -13,25 +14,19 @@ CHECKLIST_CATEGORY_MAP = {
     "air_filter": "air_intake",
 }
 
-
 def load_checklist_items(category: str) -> list:
-    items = []
     mapped_category = CHECKLIST_CATEGORY_MAP.get(category.strip().lower(), category.strip().lower())
     csv_path = os.path.join(os.path.dirname(__file__), "../../data/checklist_items.csv")
+    items = []
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
             if row["category"].strip().lower() == mapped_category:
                 items.append(row)
 
-    # sort by item_id so Step 1/2/3 is consistent
-    try:
-        items.sort(key=lambda r: int(r["item_id"]))
-    except Exception:
-        pass
-
+    # consistent ordering (Step 1/2/3)
+    items.sort(key=lambda r: int(r["item_id"]))
     return items
-
 
 def get_checklist_step(category: str, step_index: int) -> dict:
     steps = load_checklist_items(category)
@@ -52,7 +47,6 @@ def get_checklist_step(category: str, step_index: int) -> dict:
         "base_interval": step["base_interval"],
     }
 
-
 def _should_force_followup(obs: str) -> bool:
     o = (obs or "").lower()
 
@@ -62,7 +56,7 @@ def _should_force_followup(obs: str) -> bool:
         "swelling", "leak", "leaking"
     ]
 
-    # detect numeric voltage values like 12.3V, 12.3 v, 12.3vdc
+    # detect numeric voltage like 12.3V / 12.3 vdc / 12.3 v
     m = re.search(r"(\d{1,2}\.\d+)\s*v", o)
     if m:
         try:
@@ -73,7 +67,7 @@ def _should_force_followup(obs: str) -> bool:
 
     return any(t in o for t in triggers)
 
-
+@audit("adaptive_checklist_agent")
 def run_adaptive_checklist(session_id: str, current_item: str, tech_observation: str) -> dict:
     checklist_items = load_checklist_items(current_item)
 
@@ -117,6 +111,8 @@ STATE-AWARE RULES (very important):
   3) Check battery charger output range (charger may be causing failure)
 - Do not recommend cleaning as a mandatory step unless the tech specifically asked how to clean.
 - Do not mention baking soda.
+- Do NOT claim "electrolyte leakage" unless the tech_observation explicitly includes "leak", "leaking", or "wetness".
+- If corrosion/white powder is present and no leak is mentioned, describe it as "corrosion / possible electrolyte residue" (not leakage).
 
 Return JSON only, in this exact format:
 {{
@@ -138,18 +134,23 @@ Rules:
 
     result = call_llm(prompt, timeout_s=90, retries=1)
 
-    # If LLM failed, still return something usable for the UI
+    # If LLM is down, return deterministic fallback
     if "error" in result:
-        result = {
-            "next_step": f"Continue standard {current_item} inspection",
+        forced = _should_force_followup(tech_observation)
+        return {
+            "next_step": (
+                "1. Perform a battery load test and record pass/fail threshold. "
+                "2. Inspect battery case for swelling/bulging and any leakage. "
+                "3. Check battery charger output range and record voltage."
+            ) if forced else next_standard,
             "instruction": "LLM unavailable. Continue checklist using standard procedure.",
             "normal_looks_like": "",
             "abnormal_looks_like": "",
-            "follow_up_required": False,
+            "follow_up_required": forced,
             "confidence": 0.70,
         }
 
-    # Hard guardrail: if observation is clearly abnormal/borderline, force expansion
+    # Hard guardrail: if clearly abnormal/borderline, force expansion (keeps demo stable)
     if _should_force_followup(tech_observation):
         result["follow_up_required"] = True
         result["next_step"] = (
@@ -158,8 +159,15 @@ Rules:
             "3. Check battery charger output range and record voltage."
         )
         result["instruction"] = result.get("instruction") or (
-            "These checks confirm whether the battery can hold under load, whether there is a safety risk "
-            "from internal failure, and whether the charger is contributing to the problem."
+            "These checks confirm whether the battery can hold under load, "
+            "whether there is a safety risk from internal failure, and "
+            "whether the charger is contributing to the problem."
         )
+
+    # Guardrail: ensure schema keys exist
+    result.setdefault("normal_looks_like", "")
+    result.setdefault("abnormal_looks_like", "")
+    result.setdefault("follow_up_required", False)
+    result.setdefault("confidence", 0.70)
 
     return result

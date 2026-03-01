@@ -1,25 +1,27 @@
 import re
-from typing import Dict
+from typing import Dict, Optional
 
-
-def classify_safety_level(observation: str, asset: Dict[str, str]) -> str:
-    """
-    Deterministic safety classification from the text observation.
-    Keeps the demo stable (no LLM randomness for safety_color).
-    """
+def classify_safety_level(observation: str, asset: Optional[Dict[str, str]] = None) -> str:
     o = (observation or "").lower()
 
-    # hard red conditions
-    red_keywords = [
-        "arcing", "burned", "burnt", "fuel leak", "coolant leak",
-        "swelling", "bulging", "cracked", "seized", "failed load test",
-        "won't start", "no start", "shutdown", "overheating",
-        "white powder", "corrosion"
+    # RED = clear safety hazard or failed verification
+    red_triggers = [
+        "leak", "leaking", "swelling", "bulging", "crack", "cracked",
+        "arcing", "burned", "burnt", "failed load test", "fails load test"
     ]
-    if any(k in o for k in red_keywords):
-        return "yellow" if "white powder" in o or "corrosion" in o else "red"
 
-    # numeric voltage parsing -> yellow if <12.4V
+    # YELLOW = abnormal/borderline but not immediate hazard
+    yellow_triggers = [
+        "white powder", "corrosion",
+        "borderline", "marginal", "low", "unusual", "slightly off", "below threshold"
+    ]
+
+    if any(t in o for t in red_triggers):
+        return "red"
+    if any(t in o for t in yellow_triggers):
+        return "yellow"
+
+    # Voltage parsing for battery-ish text
     m = re.search(r"(\d{1,2}\.\d+)\s*v", o)
     if m:
         try:
@@ -28,10 +30,5 @@ def classify_safety_level(observation: str, asset: Dict[str, str]) -> str:
                 return "yellow"
         except Exception:
             pass
-
-    # softer yellow conditions
-    yellow_keywords = ["below threshold", "borderline", "marginal", "low", "unusual", "slightly off"]
-    if any(k in o for k in yellow_keywords):
-        return "yellow"
 
     return "green"

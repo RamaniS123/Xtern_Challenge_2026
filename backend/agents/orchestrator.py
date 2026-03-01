@@ -7,16 +7,14 @@ from agents.safety import classify_safety_level
 import csv
 import os
 
-
 def load_asset(asset_id: str) -> dict:
     csv_path = os.path.join(os.path.dirname(__file__), "../../data/generator_assets.csv")
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            if row["asset_id"] == asset_id:
+            if row["asset_id"].strip() == asset_id.strip():
                 return dict(row)
     return {}
-
 
 def run_pm_session(asset_id: str, tech_id: str) -> dict:
     asset = load_asset(asset_id)
@@ -25,27 +23,22 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
 
     print(f"Loaded asset: {asset['model_name']} at {asset['site_type']}")
 
-    # Step 1/2 - risk assessment
+    # Step 2 - risk assessment
     print("Running risk assessment...")
     risk_result = run_risk_assessment(session_id="test_session", asset=asset)
     print(f"Risk result: {risk_result}")
 
-    # Guard: if LLM failed, don't crash
-    if "priorities" not in risk_result:
-        return {
-            "error": "risk_assessment_failed",
-            "asset": asset,
-            "risk_assessment": risk_result,
-        }
+    # Guardrail: ensure priorities exist (risk_assessment already tries, but don't crash here)
+    priorities = risk_result.get("priorities") or []
+    if not priorities:
+        return {"error": "risk_assessment_failed", "detail": risk_result}
 
-    # Step 3 - adaptive checklist for top priority
-    first_priority = risk_result["priorities"][0]["category"]
+    # Step 3 - checklist
+    first_priority = priorities[0]["category"]
     print(f"Running checklist for: {first_priority}")
 
-    # For YOUR demo observation (voltage 12.3V), show the voltage step (battery step index 2)
-    step_for_demo = 2 if first_priority == "battery" else 0
-    step0 = get_checklist_step(first_priority, step_for_demo)
-
+    # Screen 3 content (what tech sees BEFORE typing)
+    step0 = get_checklist_step(first_priority, 2)  # your CSV battery voltage is item_id 28, often step index 2
     if step0:
         print("\n--- SCREEN 3 (Checklist Step) ---")
         print(f"{step0['category'].upper()} • Step {step0['step_index']+1} of {step0['step_count']}")
@@ -54,9 +47,7 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
         print(f"ABNORMAL: {step0['abnormal_hint']}")
         print("--------------------------------\n")
 
-    # Tech observation (demo)
     tech_observation = "battery voltage reads 12.3V, white powder visible on both terminals"
-
     checklist_result = run_adaptive_checklist(
         session_id="test_session",
         current_item=first_priority,
@@ -64,25 +55,25 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
     )
     print(f"Checklist result: {checklist_result}")
 
-    # Step 4 - findings analysis (deterministic safety)
+    # Step 4 - findings analysis
+    print("Running findings analysis...")
     obs = "voltage 12.3V below threshold, white powder on terminals, load test voltage dropped to 11.4V"
     safety_level = classify_safety_level(obs, asset)
 
-    sample_findings = [{
+    findings = [{
         "item": first_priority,
         "observation": obs,
         "safety_level": safety_level
     }]
 
-    print("Running findings analysis...")
     findings_result = run_findings_analysis(
         session_id="test_session",
-        findings=sample_findings,
+        findings=findings,
         asset=asset
     )
     print(f"Findings result: {findings_result}")
 
-    # Step 5 - escalation if needed
+    # Step 5 - escalation
     escalation_result = None
     if findings_result.get("escalation_required"):
         print("Escalation required - running escalation agent...")
@@ -90,7 +81,7 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
             session_id="test_session",
             findings_summary=findings_result,
             asset=asset,
-            escalation_reason=findings_result.get("escalation_reason", "Borderline findings require senior review")
+            escalation_reason=findings_result.get("escalation_reason", "Escalation required")
         )
         print(f"Escalation result: {escalation_result}")
 
@@ -101,7 +92,6 @@ def run_pm_session(asset_id: str, tech_id: str) -> dict:
         "findings_analysis": findings_result,
         "escalation": escalation_result
     }
-
 
 if __name__ == "__main__":
     result = run_pm_session("GEN013", "TECH01")

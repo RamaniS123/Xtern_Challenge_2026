@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Optional, Tuple
 
-
 def compute_hours_overdue(asset: Dict[str, str]) -> int:
     try:
         rhsls = int(asset.get("runtime_hours_since_last_service", "0"))
@@ -9,13 +8,12 @@ def compute_hours_overdue(asset: Dict[str, str]) -> int:
     except Exception:
         return 0
 
-
 def compute_operational_risk_index(
     asset: Dict[str, str],
     findings: List[Dict[str, Any]],
 ) -> Tuple[int, List[Dict[str, Any]]]:
     """
-    Deterministic ORI scoring.
+    Deterministic ORI scoring based on YOUR rubric.
     Returns (risk_index, breakdown).
     """
     breakdown: List[Dict[str, Any]] = []
@@ -70,14 +68,12 @@ def compute_operational_risk_index(
     score = min(100, score)
     return score, breakdown
 
-
 def operational_status_from_index(risk_index: int) -> str:
     if risk_index < 40:
         return "READY"
     if risk_index < 70:
         return "CAUTION"
     return "NOT_READY"
-
 
 def site_clearance_from_status(status: str) -> str:
     if status == "READY":
@@ -86,14 +82,13 @@ def site_clearance_from_status(status: str) -> str:
         return "MONITOR CLOSELY"
     return "DO NOT RELEASE AS OPERATIONAL"
 
-
 def compute_escalation(
     asset: Dict[str, str],
     findings: List[Dict[str, Any]],
-    risk_index: int,
+    risk_index: int
 ) -> Tuple[bool, Optional[str]]:
     """
-    Deterministic escalation rules:
+    Deterministic escalation rules from your prompt:
       - red safety finding
       - yellow and age > 6
       - mission-critical (hospital/data_center) with any non-green finding
@@ -121,23 +116,19 @@ def compute_escalation(
 
     return False, None
 
-
 def apply_mission_critical_release_gate(
     asset: Dict[str, str],
-    findings: List[Dict[str, Any]],
+    findings: List[Dict[str, Any]]
 ) -> Tuple[bool, Optional[str]]:
     """
-    Gate = mission-critical sites require ALL findings green to release.
-    Returns (triggered, reason).
+    UI gate only (doesn't change ORI). If mission-critical site and any finding is not green,
+    we treat the unit as "DO NOT RELEASE" until fixed.
     """
     site = (asset.get("site_type", "") or "").lower()
-    if site not in ("hospital", "data_center"):
-        return False, None
-
     safety_levels = [str(f.get("safety_level", "green")).lower() for f in findings]
     any_not_green = any(s != "green" for s in safety_levels)
 
-    if any_not_green:
+    if site in ("hospital", "data_center") and any_not_green:
         return True, f"mission-critical site ({site}) requires all findings green before release"
 
     return False, None

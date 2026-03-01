@@ -1,6 +1,7 @@
 import csv
 import os
 from agents import call_llm
+from audit_log import audit
 from agents.scoring import (
     compute_operational_risk_index,
     operational_status_from_index,
@@ -19,7 +20,6 @@ CATEGORY_MAP = {
     "air_filter": "air_intake",
 }
 
-
 def load_parts_for_categories(categories: list, engine_model: str) -> list:
     parts = []
     mapped_categories = [CATEGORY_MAP.get(c.strip().lower(), c.strip().lower()) for c in categories]
@@ -33,53 +33,47 @@ def load_parts_for_categories(categories: list, engine_model: str) -> list:
                 parts.append(row)
     return parts
 
-
+@audit("findings_analysis_agent")
 def run_findings_analysis(session_id: str, findings: list, asset: dict) -> dict:
     categories = list(set([f["item"] for f in findings]))
     relevant_parts = load_parts_for_categories(categories, asset["engine_model"])
 
-    if relevant_parts:
-        parts_text = "\n".join([
-            f"- {row['part_name']}: action={row['typical_pm_action']} | probability={row['probability_needed']} | stock={row['synthetic_stock_local']}"
-            for row in relevant_parts[:10]
-        ])
-        allowed_part_names = [row["part_name"] for row in relevant_parts]
-    else:
-        parts_text = "No specific parts found for these categories"
-        allowed_part_names = []
+    allowed_part_names = [row["part_name"] for row in relevant_parts] if relevant_parts else []
+    parts_text = "\n".join([
+        f"- {row['part_name']}: action={row['typical_pm_action']} | probability={row['probability_needed']} | stock={row['synthetic_stock_local']}"
+        for row in relevant_parts[:10]
+    ]) if relevant_parts else "No specific parts found for these categories"
 
     findings_text = "\n".join([
         f"- {f['item']}: {f['observation']} (safety_level: {f['safety_level']})"
         for f in findings
     ])
 
+    # Deterministic scoring + gating
     ori, breakdown = compute_operational_risk_index(asset, findings)
     status = operational_status_from_index(ori)
-
-    # Mission-critical gate (if triggered, override status to NOT_READY)
-    gate_triggered, gate_reason = apply_mission_critical_release_gate(asset, findings)
-    if gate_triggered:
-        status = "NOT_READY"
-
     clearance = site_clearance_from_status(status)
 
-    escalation_required, escalation_reason = compute_escalation(asset, findings, ori)
+    gate_triggered, gate_reason = apply_mission_critical_release_gate(asset, findings)
+    if gate_triggered:
+        clearance = "DO NOT RELEASE AS OPERATIONAL"
 
-    # If gate triggers, ensure escalation reason exists (helps UI & escalation copy)
+    escalation_required, escalation_reason = compute_escalation(asset, findings, ori)
     if gate_reason and not escalation_reason:
         escalation_reason = gate_reason
+        escalation_required = True  # gate implies escalation-worthy for demo
 
     prompt = f"""
 Return JSON only. Start with {{ and end with }}.
 
 You are a Cummins senior service engineer writing an action plan from PM visit findings.
 
-Asset: {asset['model_name']} ({asset['engine_model']})
-Age: {asset['age_years']} years
-Environment: {asset['environment_type']}
-Site type: {asset['site_type']}
-Runtime hours since last service: {asset['runtime_hours_since_last_service']}
-PM interval hours: {asset['pm_interval_hours']}
+Asset: {asset.get('model_name')} ({asset.get('engine_model')})
+Age: {asset.get('age_years')} years
+Environment: {asset.get('environment_type')}
+Site type: {asset.get('site_type')}
+Runtime hours since last service: {asset.get('runtime_hours_since_last_service')}
+PM interval hours: {asset.get('pm_interval_hours')}
 
 Findings from today's visit:
 {findings_text}
@@ -131,14 +125,9 @@ Rules:
 
     result = call_llm(prompt, timeout_s=90, retries=1)
 
-    ap = result.get("action_plan")
-    if isinstance(ap, list) and len(ap) > 1:
-        result["action_plan"] = [ap[0]]
-
-    # If LLM failed, still return deterministic summary fields so demo doesn't die
+    # If LLM failed, return a clean fallback action plan
     if "error" in result:
         result = {
-            **result,
             "operational_risk_index": ori,
             "operational_status": status,
             "site_clearance": clearance,
@@ -151,11 +140,11 @@ Rules:
 
     # Mission-critical release gate info for UI
     result["release_gate"] = {
-        "triggered": bool(gate_reason),
-        "reason": gate_reason,
+        "triggered": bool(gate_triggered),
+        "reason": gate_reason
     }
 
-    # Enforce deterministic fields
+    # Enforce deterministic fields (LLM can't drift these)
     result["operational_risk_index"] = ori
     result["operational_status"] = status
     result["site_clearance"] = clearance
