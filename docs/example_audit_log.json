@@ -1,0 +1,41 @@
+﻿{
+    "session_id":  "d9073725-9923-4375-88b4-6bf702318980",
+    "audit_log":  [
+                      {
+                          "event_id":  "708414a3-eb61-41a8-96ef-628b5518aca9",
+                          "session_id":  "d9073725-9923-4375-88b4-6bf702318980",
+                          "agent_id":  "risk_assessment_agent",
+                          "timestamp":  "2026-03-05T23:08:29.264030+00:00",
+                          "input_summary":  "{\u0027asset_id\u0027: \u0027GEN013\u0027, \u0027model_name\u0027: \u0027DFEJ\u0027, \u0027engine_model\u0027: \u0027QSX15\u0027, \u0027standby_kw\u0027: \u0027450\u0027, \u0027site_type\u0027: \u0027hospital\u0027, \u0027environment_type\u0027: \u0027hot_dusty\u0027, \u0027age_years\u0027: \u00278\u0027, \u0027runtime_hours_since_last_service",
+                          "output_json":  "{\"priorities\": [{\"rank\": 1, \"category\": \"battery\", \"reason\": \"Borderline voltage reading flagged during last service, and considering the asset is 8 years old and operating in a hot and dusty environment, there is a high likelihood of battery degradation.\", \"confidence\": 0.92}, {\"rank\": 2, \"category\": \"cooling\", \"reason\": \"The asset has been running for 270 hours since the last service, and with a PM interval of 125 hours, it\u0027s 145 hours overdue for a coolant flush and system inspection to prevent overheating in the hot environment.\", \"confidence\": 0.88}, {\"rank\": 3, \"category\": \"fuel\", \"reason\": \"The QSX15 engine has been operating in a dusty environment for 8 years, and with 145 hours overdue for a fuel filter change, there is a risk of fuel system contamination and decreased engine performance.\", \"confidence\": 0.82}], \"hours_overdue\": 145, \"pre_visit_summary\": \"The #1 priority is the battery system, as borderline voltage reading was flagged during last service, and considering...\"}",
+                          "confidence":  0.92
+                      },
+                      {
+                          "event_id":  "3ea8df7f-b85d-4045-9e41-0dd237f29a9b",
+                          "session_id":  "d9073725-9923-4375-88b4-6bf702318980",
+                          "agent_id":  "adaptive_checklist_agent",
+                          "timestamp":  "2026-03-05T23:13:11.604720+00:00",
+                          "input_summary":  "battery | battery voltage reads 12.3V, white powder visible on both terminals",
+                          "output_json":  "{\"next_step\": \"1. Perform a battery load test and record pass/fail threshold. 2. Inspect battery case for swelling/bulging and any leakage. 3. Check battery charger output range and record voltage.\", \"instruction\": \"The battery voltage is low (12.3V), indicating a possible issue. White powder is visible on the terminals, which could be corrosion or electrolyte residue. To confirm the battery\u0027s ability to hold a charge, we need to perform a load test. Additionally, we need to check the battery case for any signs of swelling or bulging, which could be a safety risk. Finally, we should check the charger\u0027s output range to rule out any issues with the charging system.\", \"normal_looks_like\": \"Battery voltage is within the normal range (around 12.6V for a 12V battery). Terminals are clean and tight, with no corrosion or signs of electrolyte leakage.\", \"abnormal_looks_like\": \"Battery voltage is low (below 12.6V). White powder is visible on the terminals, indicating possible corrosion or electrolyte residue. This could indicate a charging system issue or a battery problem.\", \"follow_up_required\": true, \"confidence\": 0.88}",
+                          "confidence":  0.88
+                      },
+                      {
+                          "event_id":  "9be1b3a7-825c-481b-bd73-ac016a729162",
+                          "session_id":  "d9073725-9923-4375-88b4-6bf702318980",
+                          "agent_id":  "findings_analysis_agent",
+                          "timestamp":  "2026-03-05T23:13:38.765465+00:00",
+                          "input_summary":  "list[1] | {\u0027asset_id\u0027: \u0027GEN013\u0027, \u0027model_name\u0027: \u0027DFEJ\u0027, \u0027engine_model\u0027: \u0027QSX15\u0027, \u0027standby_kw\u0027: \u0027450\u0027, \u0027site_type\u0027: \u0027hospital\u0027, \u0027environment_type\u0027: \u0027hot_dusty\u0027, \u0027age_years\u0027: \u00278\u0027, \u0027runtime_hours_since_last_service",
+                          "output_json":  "{\"operational_risk_index\": 65, \"operational_status\": \"CAUTION\", \"site_clearance\": \"DO NOT RELEASE AS OPERATIONAL\", \"risk_breakdown\": [{\"factor\": \"yellow_finding\", \"points\": 25}, {\"factor\": \"age_over_7\", \"points\": 15}, {\"factor\": \"environment_hot_dusty\", \"points\": 10}, {\"factor\": \"mission_critical_hospital\", \"points\": 10}, {\"factor\": \"pm_overdue\", \"points\": 5}], \"action_plan\": [{\"issue\": \"battery voltage 12.3V below threshold, white powder on terminals, load test voltage dropped to 11.4V\", \"urgency\": \"immediate\", \"recommended_action\": \"Replace the main battery 12V due to low voltage reading and white powder on terminals\", \"parts_needed\": [{\"part_name\": \"main_battery_12V\", \"stock_status\": \"in_stock\"}]}], \"escalation_required\": true, \"escalation_reason\": \"yellow finding on asset age \u003e 6 requires senior review\", \"confidence\": 0.87, \"release_gate\": {\"triggered\": true, \"reason\": \"mission-critical site (hospital) requires all findings green before release\"}}",
+                          "confidence":  0.87
+                      },
+                      {
+                          "event_id":  "d11d1dce-d7ab-47d3-b92c-da6bb177cd68",
+                          "session_id":  "d9073725-9923-4375-88b4-6bf702318980",
+                          "agent_id":  "escalation_agent_run",
+                          "timestamp":  "2026-03-05T23:14:05.326056+00:00",
+                          "input_summary":  "{\u0027operational_risk_index\u0027: 65, \u0027operational_status\u0027: \u0027CAUTION\u0027, \u0027site_clearance\u0027: \u0027DO NOT RELEASE AS OPERATIONAL\u0027, \u0027risk_breakdown\u0027: [{\u0027factor\u0027: \u0027yellow_finding\u0027, \u0027points\u0027: 25}, {\u0027factor\u0027: \u0027age_over_7 | {\u0027asset_id\u0027: \u0027GEN013\u0027, \u0027model_name\u0027: \u0027DFEJ\u0027, \u0027engine_model\u0027: \u0027QSX15\u0027, \u0027standby_kw\u0027: \u0027450\u0027, \u0027site_type\u0027: \u0027hospital\u0027, \u0027environment_type\u0027: \u0027hot_dusty\u0027, \u0027age_years\u0027: \u00278\u0027, \u0027runtime_hours_since_last_service | yellow finding on asset age \u003e 6 requires senior review",
+                          "output_json":  "{\"approver_name\": \"Lisa Patel\", \"approver_email\": \"lisa.patel@cummins.com\", \"brief_summary\": \"Asset DFEJ at a hospital has a yellow finding on age \u003e 6. The operational status is CAUTION, and site clearance is DO NOT RELEASE AS OPERATIONAL. Do not release until corrective action completed.\", \"key_findings\": [\"yellow finding on asset age \u003e 6\", \"site clearance DO NOT RELEASE AS OPERATIONAL\"], \"recommended_decision\": \"Approve: Replace main_battery_12V before releasing the unit.\", \"urgency_level\": \"high\", \"confidence\": 0.87}",
+                          "confidence":  0.87
+                      }
+                  ]
+}
