@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMAdapt | Supervisor Dashboard</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b1220">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css?v=3.3">
+    <script src="dashboard.js?v=2.4" defer></script>
+</head>
+
+<body class="d-flex flex-column h-100 vh-100 text-light bg-black">
+
+    <!-- Glowing Background Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <!-- Offline Badge -->
+    <div id="offlineBadge" class="alert alert-warning mb-0 p-2 shadow-sm rounded-0" style="display: none;">
+        <i class="bi bi-cloud-slash-fill me-2"></i>You are currently offline. Live updates paused.
+    </div>
+
+    <!-- Full Screen Loader Overlay -->
+    <div id="loadingOverlay">
+        <div class="bolt-loader text-primary mb-4">
+            <i class="bi bi-lightning-charge-fill" style="font-size: 4rem;"></i>
+        </div>
+        <div class="fading-text text-light h5 fw-medium tracking-wide">Loading Dashboard...</div>
+    </div>
+
+    <!-- Global Toasts Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;"></div>
+
+    <!-- Floating Navbar -->
+    <div class="container mt-3 px-4 position-relative" style="z-index: 1050;">
+        <nav id="mainNav" class="navbar navbar-expand-lg navbar-floating">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1 d-flex align-items-center">
+                    <i class="bi bi-lightning-charge-fill me-2 fs-3 text-primary"
+                        style="filter: drop-shadow(0 0 10px rgba(218, 41, 28, 0.8));"></i> PMAdapt <span
+                        class="text-muted ms-2 fs-6 fw-normal d-none d-sm-inline opacity-75 letter-spacing-1">| Central
+                        Command</span>
+                </span>
+                <div class="d-flex align-items-center ms-auto gap-3">
+                    <div id="navNetworkBadge"
+                        class="badge bg-success px-3 py-2 rounded-pill shadow-sm d-flex align-items-center gap-2 border border-secondary"
+                        title="Network Status" style="transition: all 0.3s ease;">
+                        <i id="navNetworkIcon" class="bi bi-wifi text-light fs-5 lh-1"></i>
+                        <span id="navNetworkText" class="d-none d-sm-inline text-light fw-medium">Online</span>
+                    </div>
+                    <button id="btnRefresh" class="btn btn-outline-primary btn-sm rounded-pill px-4 hover-glow">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                    </button>
+                    <span id="navRoleBadge"
+                        class="badge nav-role-badge px-3 py-2 rounded-pill d-flex align-items-center gap-2">
+                        <span class="fs-5 lh-1">👨‍💻</span> Supervisor
+                    </span>
+                    <button id="btnLogout"
+                        class="btn btn-outline-danger btn-sm rounded-circle p-2 ms-2 hover-glow d-flex align-items-center justify-content-center"
+                        style="width: 36px; height: 36px; border-color: rgba(239, 68, 68, 0.5);" aria-label="Logout">
+                        <i class="bi bi-power fs-5"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="container-fluid flex-grow-1 overflow-hidden mt-4 px-4 pb-4">
+        <div class="row h-100">
+
+            <!-- LEFT COLUMN: Pending Escalations List -->
+            <div class="col-md-5 col-lg-4 p-0 h-100 d-flex flex-column"
+                style="background: rgba(0,0,0,0.4); border-right: 1px solid var(--pm-glass-border);">
+                <div class="p-4 border-bottom d-flex justify-content-between align-items-center"
+                    style="border-color: var(--pm-glass-border) !important; background: rgba(255,255,255,0.02);">
+                    <h5 class="mb-0 fw-bold tracking-wide"><i class="bi bi-inbox-fill text-primary me-2"></i>Pending
+                        Review</h5>
+                    <span id="pendingCountBadge" class="badge bg-primary rounded-pill fs-6 px-3 shadow-sm"
+                        style="box-shadow: 0 0 10px var(--pm-primary-glow) !important;">0</span>
+                </div>
+
+                <div id="escalationList" class="flex-grow-1 overflow-auto p-3 custom-scrollbar">
+                    <!-- List items injected here -->
+                    <div id="emptyEscalationState" class="text-center p-5 mt-5 text-muted">
+                        <i class="bi bi-check-circle fs-1 mb-3 d-block text-success opacity-50"
+                            style="filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4));"></i>
+                        <h5 class="text-light tracking-wide">All Caught Up</h5>
+                        <p class="small text-muted">No pending escalations require your attention.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Detail View -->
+            <div class="col-md-7 col-lg-8 p-0 h-100 d-flex flex-column position-relative"
+                style="background: rgba(0,0,0,0.2);">
+                <div id="emptyDetailState"
+                    class="d-flex h-100 justify-content-center align-items-center flex-column text-muted">
+                    <i class="bi bi-card-text fs-1 mb-3 opacity-25"></i>
+                    <h5 class="text-secondary fw-normal">Select an item to view details</h5>
+                </div>
+
+                <div id="detailView" class="h-100 d-flex flex-column d-none">
+
+                    <!-- Detail Header -->
+                    <div class="p-4 border-bottom glass-card shadow-sm m-3 mb-0"
+                        style="border-radius: 16px 16px 0 0 !important; border-bottom: none !important;">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span id="detUrgency"
+                                    class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill mb-2 px-3"><i
+                                        class="bi bi-lightning-charge-fill me-1"></i> HIGH URGENCY</span>
+                                <h3 id="detAssetId" class="fw-bold mb-1 letter-spacing-1">--</h3>
+                                <div class="text-muted small">
+                                    <i class="bi bi-geo-alt-fill me-1 text-primary"></i><span id="detSiteType"
+                                        class="me-3">--</span>
+                                    <i class="bi bi-person-badge-fill me-1 text-primary"></i><span
+                                        id="detTechId">--</span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="small text-muted fw-bold text-uppercase mb-1 tracking-wider">Operational
+                                    Risk</div>
+                                <h2 id="detOri" class="fw-bold text-danger mb-0"
+                                    style="text-shadow: 0 0 15px rgba(239, 68, 68, 0.4);">--</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Body (Scrollable) -->
+                    <div class="flex-grow-1 overflow-auto p-3 custom-scrollbar glass-card m-3 mt-0 mb-0 border-top-0 border-bottom-0"
+                        style="border-radius: 0 !important;">
+
+                        <div class="row g-4 mb-4">
+                            <!-- Summary Card -->
+                            <div class="col-xl-6">
+                                <div class="analytical-widget position-relative overflow-hidden p-4"
+                                    style="background: rgba(245, 158, 11, 0.2) !important; border: 1px solid rgba(245, 158, 11, 0.5) !important; border-radius: 12px; box-shadow: 0 8px 32px rgba(245, 158, 11, 0.2) !important;">
+                                    <div
+                                        class="position-absolute top-0 start-0 w-100 h-100 bg-warning opacity-25 blur-xl">
+                                    </div>
+                                    <h6 class="text-warning fw-bold mb-3 d-flex align-items-center tracking-wide text-uppercase small"
+                                        style="text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);">
+                                        <i class="bi bi-file-earmark-text me-2 fs-5"></i>Situation Brief
+                                    </h6>
+                                    <p id="detBrief" class="text-white fw-medium fs-6 mb-0 position-relative z-1"
+                                        style="line-height: 1.6; letter-spacing: 0.3px;">--</p>
+                                </div>
+                            </div>
+                            <!-- Recommended Decision Card -->
+                            <div class="col-xl-6">
+                                <div class="analytical-widget text-center d-flex flex-column justify-content-center">
+                                    <h6 class="text-muted fw-bold mb-3 text-uppercase small tracking-wide">System
+                                        Recommendation</h6>
+                                    <h4 id="detRecommendedDecision" class="fw-bold text-primary mb-0"
+                                        style="text-shadow: 0 0 10px rgba(218, 41, 28, 0.5);">--</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Audit Log trigger -->
+                        <div class="text-end mb-4">
+                            <button id="btnOpenAuditLog"
+                                class="btn btn-outline-primary btn-sm rounded-pill px-4 hover-glow">
+                                <i class="bi bi-journal-text me-1"></i> View Full Audit Log
+                            </button>
+                        </div>
+
+                        <!-- Risk & Action placeholder -->
+                        <div id="detExtraInfo" class="analytical-widget mb-2">
+                            <div class="text-muted fw-bold text-uppercase small tracking-wide mb-2"><i
+                                    class="bi bi-shield-exclamation text-secondary me-2"></i>Findings & Context</div>
+                            <p class="text-muted small mb-0" style="line-height: 1.6;">The technician flagged critical
+                                safety hazards that
+                                exceed the normal release thresholds. Supervisor override is strictly required to
+                                clear the asset for partial operation or mandate immediate lockdown.</p>
+                        </div>
+
+                    </div>
+
+                    <!-- Detail Footer (Action Bar) -->
+                    <div class="p-4 glass-card shadow-lg mt-auto m-3 border-top-0 d-flex justify-content-end align-items-center gap-3"
+                        style="border-radius: 0 0 16px 16px !important; z-index: 10;">
+                        <button id="btnReject" class="btn btn-outline-danger px-4 py-2 fw-bold rounded-pill hover-glow"
+                            style="display:none;">Reject</button>
+                        <button id="btnApproveAction"
+                            class="btn btn-warning text-dark px-5 py-3 fw-bold rounded-pill shadow-lg hover-glow d-flex align-items-center fs-5"
+                            style="box-shadow: 0 0 20px rgba(245, 158, 11, 0.4) !important;">
+                            <i class="bi bi-shield-check me-2 fs-4"></i> Override & Approve
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Approve Modal -->
+    <div class="modal fade" id="approveModal" tabindex="-1" aria-labelledby="approveModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg"
+                style="border-color: rgba(245, 158, 11, 0.3) !important; background: var(--pm-glass-bg); backdrop-filter: blur(20px);">
+                <div class="modal-header border-bottom-0"
+                    style="background: linear-gradient(90deg, rgba(245, 158, 11, 0.1) 0%, transparent 100%); border-color: var(--pm-glass-border) !important;">
+                    <h5 class="modal-title fw-bold text-warning d-flex align-items-center" id="approveModalLabel">
+                        <i class="bi bi-shield-check me-2 fs-4"
+                            style="filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));"></i>
+                        Approve & Provide Instructions
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 border-top" style="border-color: var(--pm-glass-border) !important;">
+                    <p class="text-muted small mb-4 lh-base">You are approving the escalation for Asset <strong
+                            id="modalAssetId" class="text-light tracking-wide"></strong>. You must provide clear
+                        instructions for the
+                        technician to follow.</p>
+                    <form id="approveForm">
+                        <div class="mb-3">
+                            <label for="approveInstruction"
+                                class="form-label text-warning fw-bold small tracking-wider">SUPERVISOR
+                                INSTRUCTIONS <span class="text-danger">*</span></label>
+                            <textarea class="form-control bg-dark border-secondary text-light" id="approveInstruction"
+                                rows="4" placeholder="e.g. Replace main_battery_12V, retest, then release." required
+                                style="resize: none;"></textarea>
+                            <div class="form-text text-muted mt-2"><i class="bi bi-info-circle me-1"></i>These
+                                instructions will be shown on the technician's
+                                screen immediately.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-top"
+                    style="border-color: var(--pm-glass-border) !important; background: rgba(0,0,0,0.2);">
+                    <button type="button" class="btn btn-outline-light rounded-pill px-4 hover-glow"
+                        data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="btnConfirmApprove"
+                        class="btn btn-warning text-dark rounded-pill fw-bold px-5 shadow-sm hover-glow d-flex align-items-center">
+                        Confirm Approval <i class="bi bi-check2 ms-2 fs-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audit Log Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="auditLogOffcanvas" aria-labelledby="auditLogOffcanvasLabel"
+        style="width: 450px; background: var(--pm-glass-bg); backdrop-filter: blur(20px); border-left: 1px solid var(--pm-glass-border) !important; z-index: 1060 !important;">
+        <div class="offcanvas-header border-bottom"
+            style="border-color: var(--pm-glass-border) !important; background: rgba(0,0,0,0.2);">
+            <h5 class="offcanvas-title fw-bold d-flex align-items-center tracking-wide" id="auditLogOffcanvasLabel">
+                <i class="bi bi-shield-lock-fill text-primary me-2"></i> Audit Trail
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"
+                aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0 custom-scrollbar" style="background: rgba(0,0,0,0.1);">
+            <div id="auditLogContent" class="list-group list-group-flush">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Bootstrap 5 JS Bundle (local - CDN was blocked) -->
+    <script src="bootstrap.bundle.min.js"></script>
+    <!-- Dashboard Logic -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

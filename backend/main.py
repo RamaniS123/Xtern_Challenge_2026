@@ -34,6 +34,7 @@ from database import (
     get_connection,
     upsert_user,
     get_user,
+    get_sessions_for_tech,
 )
 
 from supabase_sync import sync_session_to_supabase
@@ -48,11 +49,11 @@ init_db()
 
 app = FastAPI(title="PMAdapt API", version="1.0.0")
 
-# For demo: open CORS. For stricter: set to your frontend origin(s).
+# Open CORS for local development. Auth is via Bearer token in Authorization header, not cookies.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -101,13 +102,13 @@ def load_assets_minimal() -> List[Dict]:
 # -------------------- Request Models --------------------
 
 class RegisterRequest(BaseModel):
-    tech_id: str = Field(..., min_length=5, max_length=5)
+    tech_id: str = Field(..., min_length=3, max_length=20)
     password: str = Field(..., min_length=4)
     role: str = Field(default="tech")  # tech | supervisor
 
 
 class LoginRequest(BaseModel):
-    tech_id: str = Field(..., min_length=5, max_length=5)
+    tech_id: str = Field(..., min_length=3, max_length=20)
     password: str
 
 
@@ -134,6 +135,14 @@ class ApprovalRequest(BaseModel):
     decision: str  # approve / reject / etc
     instruction: str
 
+
+class EscalateRequest(BaseModel):
+    approver: str
+    approver_email: str
+    reason: str
+    urgency: str = "high"
+    brief_summary: str = ""
+    operational_risk_index: int = 0
 
 class OfflineQueueRequest(BaseModel):
     session_id: Optional[str] = None
@@ -170,6 +179,7 @@ def start_session_logic(asset_id: str, tech_id: str):
             "age_years": asset.get("age_years"),
             "engine_model": asset.get("engine_model"),
         },
+        "asset_summary": f"{asset.get('model_name', '')} {asset.get('engine_model', '')}. Environment: {asset.get('environment_type', '')}. Site: {asset.get('site_type', '')}.",
         "priority_agenda": risk_result.get("priorities", []),
         "hours_overdue": risk_result.get("hours_overdue"),
         "pre_visit_summary": risk_result.get("pre_visit_summary"),
@@ -209,20 +219,30 @@ def submit_findings_logic(session_id: str, findings_list: List[Dict]):
             findings_result.get("escalation_reason", "Escalation required"),
         )
 
-        if isinstance(escalation_result, dict) and not escalation_result.get("error"):
-            create_escalation(
-                session_id=session_id,
-                approver_name=escalation_result.get("approver_name", "Senior Engineer"),
-                approver_email=escalation_result.get("approver_email", ""),
-                brief_summary=escalation_result.get("brief_summary", ""),
-                urgency_level=escalation_result.get("urgency_level", "high"),
-                escalation_reason=findings_result.get("escalation_reason", ""),
-                timestamp=timestamp,
-            )
-
         findings_result["escalation_details"] = escalation_result
 
     return findings_result
+
+@app.post("/sessions/{session_id}/escalate")
+def escalate_session(session_id: str, body: EscalateRequest, user: Dict = Depends(get_current_user)):
+    timestamp = now()
+    conn = get_connection()
+    row = conn.execute("SELECT asset_id FROM sessions WHERE session_id = ?", (session_id,)).fetchone()
+    conn.close()
+    if not row:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    create_escalation(
+        session_id=session_id,
+        approver_name=body.approver,
+        approver_email=body.approver_email,
+        brief_summary=body.brief_summary,
+        urgency_level=body.urgency,
+        escalation_reason=body.reason,
+        timestamp=timestamp,
+        operational_risk_index=body.operational_risk_index,
+    )
+    return {"status": "escalated"}
 
 
 def replay_queued_request(session_id: Optional[str], endpoint: str, payload: dict, user: Dict):
@@ -353,6 +373,11 @@ def approve_escalation(session_id: str, body: ApprovalRequest, user: Dict = Depe
 @app.get("/sessions/{session_id}/audit-log")
 def audit_log_endpoint(session_id: str, user: Dict = Depends(get_current_user)):
     return {"session_id": session_id, "audit_log": get_audit_log(session_id)}
+
+
+@app.get("/sessions/history/me")
+def tech_history(user: Dict = Depends(require_role("tech"))):
+    return {"sessions": get_sessions_for_tech(user["tech_id"])}
 
 
 # ---- Offline queue ----

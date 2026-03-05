@@ -177,13 +177,19 @@ def save_findings(session_id: str, findings: List[Dict], timestamp: str):
 
 
 # ---- ESCALATIONS ----
-def create_escalation(session_id: str, approver_name: str, approver_email: str, brief_summary: str, urgency_level: str, escalation_reason: str, timestamp: str):
+def create_escalation(session_id: str, approver_name: str, approver_email: str, brief_summary: str, urgency_level: str, escalation_reason: str, timestamp: str, operational_risk_index: int = 0):
     conn = get_connection()
+    # Add operational_risk_index column if it doesn't exist (migration)
+    try:
+        conn.execute("ALTER TABLE escalations ADD COLUMN operational_risk_index INTEGER DEFAULT 0")
+        conn.commit()
+    except Exception:
+        pass  # Column already exists
     event_id = str(uuid.uuid4())
     conn.execute(
-        """INSERT INTO escalations (event_id, session_id, approver_name, approver_email, brief_summary, urgency_level, escalation_reason, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-        (event_id, session_id, approver_name, approver_email, brief_summary, urgency_level, escalation_reason, timestamp),
+        """INSERT INTO escalations (event_id, session_id, approver_name, approver_email, brief_summary, urgency_level, escalation_reason, created_at, operational_risk_index)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (event_id, session_id, approver_name, approver_email, brief_summary, urgency_level, escalation_reason, timestamp, operational_risk_index),
     )
     conn.commit()
     conn.close()
@@ -226,6 +232,62 @@ def get_pending_escalations() -> List[Dict]:
     """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def get_sessions_for_tech(tech_id: str) -> List[Dict]:
+    conn = get_connection()
+    rows = conn.execute("""
+        SELECT 
+            s.session_id, 
+            s.asset_id, 
+            s.tech_id, 
+            s.created_at,
+            s.status as session_status,
+            e.status as escalation_status,
+            e.brief_summary,
+            e.operational_risk_index,
+            e.urgency_level,
+            a.decision,
+            a.instruction,
+            a.approved_at,
+            (SELECT COUNT(*) FROM findings f WHERE f.session_id = s.session_id) as total_findings,
+            (SELECT COUNT(*) FROM findings f WHERE f.session_id = s.session_id AND f.safety_level IN ('YELLOW', 'RED', 'ORANGE')) as issue_findings
+        FROM sessions s
+        LEFT JOIN escalations e ON s.session_id = e.session_id
+        LEFT JOIN approvals a ON s.session_id = a.session_id
+        WHERE s.tech_id = ? AND (SELECT COUNT(*) FROM findings f WHERE f.session_id = s.session_id) > 0
+        ORDER BY s.created_at DESC
+    """, (tech_id,)).fetchall()
+    conn.close()
+    
+    results = []
+    for r in rows:
+        d = dict(r)
+        
+        # Calculate display status based on escalation presence
+        if d["escalation_status"] == "pending":
+            d["display_status"] = "pending"
+        elif d["escalation_status"] == "approved":
+            d["display_status"] = "approved"
+        else:
+            d["display_status"] = "completed"
+            
+        # Synthesize summary
+        total = d.get("total_findings", 0)
+        issues = d.get("issue_findings", 0)
+        
+        if d["brief_summary"]:
+            d["display_summary"] = f"Inspection found {issues} issues out of {total} checked items. Action needed: {d['brief_summary']}"
+        elif total > 0 and issues > 0:
+            d["display_summary"] = f"Inspection complete: {issues} issues identified across {total} items."
+        elif total > 0 and issues == 0:
+            d["display_summary"] = f"Perfect inspection! {total} items checked, 0 issues found. Setup is running flawlessly."
+        else:
+            d["display_summary"] = "Routine inspection completed. No findings reported."
+            
+        results.append(d)
+        
+    return results
 
 
 def get_audit_log(session_id: str) -> List[Dict]:
