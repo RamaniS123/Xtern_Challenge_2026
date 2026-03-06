@@ -1,0 +1,9 @@
+{
+  "name": "PMAdapt",
+  "short_name": "PMAdapt",
+  "description": "AI-guided adaptive preventive maintenance platform",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#0d6efd"
+}

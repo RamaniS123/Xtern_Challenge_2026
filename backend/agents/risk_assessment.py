@@ -88,8 +88,8 @@ Rules:
     except Exception:
         pass
 
-    # Clamp length for UI
-    if "pre_visit_summary" in result and isinstance(result["pre_visit_summary"], str) and len(result["pre_visit_summary"]) > 120:
-        result["pre_visit_summary"] = result["pre_visit_summary"][:117] + "..."
+    # Clamp length for UI (Removed per user request to show full summary)
+    # if "pre_visit_summary" in result and isinstance(result["pre_visit_summary"], str) and len(result["pre_visit_summary"]) > 120:
+    #     result["pre_visit_summary"] = result["pre_visit_summary"][:117] + "..."
 
     return result

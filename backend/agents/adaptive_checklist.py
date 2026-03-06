@@ -26,7 +26,9 @@ def load_checklist_items(category: str) -> list:
 
     # consistent ordering (Step 1/2/3)
     items.sort(key=lambda r: int(r["item_id"]))
-    return items
+    
+    # Cap at 3 items per category for demo purposes
+    return items[:3]
 
 def get_checklist_step(category: str, step_index: int) -> dict:
     steps = load_checklist_items(category)
@@ -121,12 +123,15 @@ Return JSON only, in this exact format:
   "normal_looks_like": "what normal looks like for this specific check",
   "abnormal_looks_like": "what abnormal looks like and what it indicates",
   "follow_up_required": false,
+  "safety_level": "green",
   "confidence": 0.82
 }}
 
 Rules:
 - next_step must never be empty
 - If follow_up_required is true next_step must be ONE string written as: 1. ... 2. ... 3. ...
+- safety_level must be one of: green, yellow, red
+- If follow_up_required is true, safety_level must be yellow or red.
 - Never invent observations the tech did not report
 - confidence must be between 0.70 and 0.94
 - Always return valid JSON only
@@ -147,6 +152,7 @@ Rules:
             "normal_looks_like": "",
             "abnormal_looks_like": "",
             "follow_up_required": forced,
+            "safety_level": "red" if forced else "green",
             "confidence": 0.70,
         }
 
@@ -169,5 +175,12 @@ Rules:
     result.setdefault("abnormal_looks_like", "")
     result.setdefault("follow_up_required", False)
     result.setdefault("confidence", 0.70)
+    # Always ensure safety_level is populated and valid
+    result.setdefault("safety_level", "green")
+    if result.get("safety_level") not in ("green", "yellow", "red"):
+        result["safety_level"] = "green"
+    # If follow_up_required, must be yellow or red — never green
+    if result.get("follow_up_required") and result.get("safety_level") == "green":
+        result["safety_level"] = "yellow"
 
     return result
